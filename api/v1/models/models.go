@@ -58,13 +58,18 @@ type LoginRequest struct {
 
 //
 
-func NewRegisterUser(name, username, email, password string) (*RegisterUser, error) {
+func NewRegisterUser(name, username, email, password string) *RegisterUser {
 	id := uuid.New()
+	now := time.Now()
+	zero := time.Time{}
 	return &RegisterUser{
-		ID:       id,
-		Name:     name,
-		Username: username,
-		Email:    email,
-		Password: password,
-	}, nil
+		ID:        id,
+		Name:      name,
+		Username:  username,
+		Email:     email,
+		Password:  password,
+		CreatedAt: now,
+		UpdatedAt: now,
+		LastLogin: zero,
+	}
 }

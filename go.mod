@@ -10,3 +10,5 @@ require (
 )
 
 require github.com/gorilla/mux v1.8.0
+
+require golang.org/x/crypto v0.6.0

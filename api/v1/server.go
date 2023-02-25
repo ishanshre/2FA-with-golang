@@ -58,7 +58,10 @@ func (s *PostgresStore) createTable() error {
 			otp_enabled BOOLEAN DEFAULT 'f',
 			otp_verified BOOLEAN DEFAULT 'f',
  			otp_secret VARCHAR(255),
-			otp_auth_url VARCHAR(255)
+			otp_auth_url VARCHAR(255),
+			created_at TIMESTAMPTZ,
+			updated_at TIMESTAMPTZ,
+			last_login TIMESTAMPTZ
 		);
 	`
 	_, err := s.db.Exec(query)
@@ -66,5 +69,26 @@ func (s *PostgresStore) createTable() error {
 }
 
 func (s *PostgresStore) UserSignUp(user *models.RegisterUser) error {
+	query := `
+		INSERT INTO users (
+			id, name, username, email, password, created_at, updated_at, last_login
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, $7, $8
+		);
+	`
+	_, err := s.db.Query(
+		query,
+		user.ID,
+		user.Name,
+		user.Username,
+		user.Email,
+		user.Password,
+		user.CreatedAt,
+		user.UpdatedAt,
+		user.LastLogin,
+	)
+	if err != nil {
+		return fmt.Errorf("error in creating new user: %s", err)
+	}
 	return nil
 }
