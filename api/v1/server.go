@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -13,6 +14,8 @@ import (
 
 type Storage interface {
 	UserSignUp(*models.RegisterUser) error
+	UserLogin(username string) (*models.Password, error)
+	UserUpdateLogin(username string) (*models.UserProfile, error)
 }
 
 type PostgresStore struct {
@@ -91,4 +94,41 @@ func (s *PostgresStore) UserSignUp(user *models.RegisterUser) error {
 		return fmt.Errorf("error in creating new user: %s", err)
 	}
 	return nil
+}
+
+func (s *PostgresStore) UserLogin(username string) (*models.Password, error) {
+	query := `SELECT password FROM users WHERE username = $1`
+	rows, err := s.db.Query(query, username)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return scanPassword(rows)
+	}
+	return nil, nil
+}
+
+func (s *PostgresStore) UserUpdateLogin(username string) (*models.UserProfile, error) {
+	update := `
+		UPDATE users
+		SET last_login = $2
+		WHERE username = $1
+	`
+	s.db.Exec("COMMIT")
+	_, err := s.db.Query(update, username, time.Now())
+	if err != nil {
+		return nil, err
+	}
+	query := `
+		SELECT * FROM users
+		WHERE username = $1
+	`
+	rows, err := s.db.Query(query, username)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return scanUserProfile(rows)
+	}
+	return nil, fmt.Errorf("username: %s does not exists", username)
 }

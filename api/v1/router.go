@@ -38,6 +38,7 @@ func (s *ApiServer) Run() {
 	*/
 	router := mux.NewRouter()
 	router.HandleFunc("/api/v1/auth/register", makeHttpHandler(s.handleSignUpUser))
+	router.HandleFunc("/api/v1/auth/login", makeHttpHandler(s.handleLoginUser))
 	log.Println("Starting the server at port: ", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
 }

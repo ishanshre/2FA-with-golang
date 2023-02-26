@@ -27,3 +27,25 @@ func (s *ApiServer) handleSignUpUser(w http.ResponseWriter, r *http.Request) err
 	}
 	return fmt.Errorf("%s method not allowed", r.Method)
 }
+
+func (s *ApiServer) handleLoginUser(w http.ResponseWriter, r *http.Request) error {
+	if err := checkPostMethod(r); err != nil {
+		return err
+	}
+	req := new(models.LoginRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return err
+	}
+	password, err := s.store.UserLogin(req.Username)
+	if err != nil {
+		return err
+	}
+	if err := utils.VerifyPassword(password.Password, req.Password); err != nil {
+		return err
+	}
+	res, err := s.store.UserUpdateLogin(req.Username)
+	if err != nil {
+		return err
+	}
+	return writeJSON(w, http.StatusOK, res)
+}
