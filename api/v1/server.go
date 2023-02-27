@@ -16,6 +16,9 @@ type Storage interface {
 	UserSignUp(*models.RegisterUser) error
 	UserLogin(username string) (*models.Password, error)
 	UserUpdateLogin(username string) (*models.UserProfile, error)
+	UserUpdateOtp(*models.Update) error
+	GetSercret(string) (*models.ScanSecret, error)
+	UserUpdateEnableOtp(string) error
 }
 
 type PostgresStore struct {
@@ -131,4 +134,61 @@ func (s *PostgresStore) UserUpdateLogin(username string) (*models.UserProfile, e
 		return scanUserProfile(rows)
 	}
 	return nil, fmt.Errorf("username: %s does not exists", username)
+}
+
+func (s *PostgresStore) UserUpdateOtp(info *models.Update) error {
+	query := `
+		UPDATE users
+		SET otp_secret = $2, otp_auth_url = $3
+		WHERE username = $1
+	`
+	s.db.Exec("COMMIT")
+	rows, err := s.db.Exec(query, info.Username, info.Otp_secret, info.Otp_auth_url)
+	if err != nil {
+		return err
+	}
+	rows_affected, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows_affected == 0 {
+		return fmt.Errorf("err in updating otp")
+	}
+	return nil
+}
+
+func (s *PostgresStore) GetSercret(username string) (*models.ScanSecret, error) {
+	query := `
+		SELECT otp_secret from users
+		WHERE username = $1
+	`
+	rows, err := s.db.Query(query, username)
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return scanSecret(rows)
+	}
+	return nil, nil
+}
+
+func (s *PostgresStore) UserUpdateEnableOtp(username string) error {
+	query := `
+		UPDATE users
+		SET otp_enabled = true, otp_verified = true
+		WHERE username = $1
+	`
+	s.db.Exec("COMMIT")
+	rows, err := s.db.Exec(query, username)
+	if err != nil {
+		return err
+	}
+	rows_affected, err := rows.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows_affected == 0 {
+		return fmt.Errorf("error in updating")
+	}
+	return nil
 }

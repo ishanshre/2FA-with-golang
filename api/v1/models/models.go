@@ -61,6 +61,40 @@ type Password struct {
 	Password string `json:"password"`
 }
 
+type Token struct {
+	Username string `json:"username"`
+	Token    string `json:"token"`
+}
+
+type ScanSecret struct {
+	Secret string `json:"secret"`
+}
+
+type GetSecret struct {
+	Username   string `json:"username"`
+	Otp_secret string `json:"otp_secret"`
+}
+
+type Username struct {
+	UserName string `json:"username"`
+}
+
+type GenerateOTP struct {
+	Otp_secret   string `json:"otp_secret"`
+	Otp_auth_url string `json:"otp_auth_url"`
+}
+
+type Update struct {
+	Username     string `json:"username"`
+	Otp_secret   string `json:"otp_secret"`
+	Otp_auth_url string `json:"otp_auth_url"`
+}
+
+type OTP struct {
+	Token      string `json:"token"`
+	Otp_secret string `json:"otp_secret"`
+}
+
 //
 
 func NewRegisterUser(name, username, email, password string) *RegisterUser {

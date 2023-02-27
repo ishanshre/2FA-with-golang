@@ -49,3 +49,65 @@ func (s *ApiServer) handleLoginUser(w http.ResponseWriter, r *http.Request) erro
 	}
 	return writeJSON(w, http.StatusOK, res)
 }
+
+func (s *ApiServer) handleGenerateOTP(w http.ResponseWriter, r *http.Request) error {
+	if err := checkPostMethod(r); err != nil {
+		return err
+	}
+	req := new(models.Username)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return err
+	}
+	storeOtp, err := utils.GenerateOtp(req.UserName)
+	if err != nil {
+		return err
+	}
+	updateVal := &models.Update{
+		Username:     req.UserName,
+		Otp_secret:   storeOtp.Otp_secret,
+		Otp_auth_url: storeOtp.Otp_auth_url,
+	}
+	if err := s.store.UserUpdateOtp(updateVal); err != nil {
+		return err
+	}
+	return writeJSON(w, http.StatusOK, ApiSuccess{Success: "otp sercret and url updated"})
+}
+
+func (s *ApiServer) handleVerifyOTP(w http.ResponseWriter, r *http.Request) error {
+	if err := checkPostMethod(r); err != nil {
+		return err
+	}
+	req := new(models.Token)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return err
+	}
+	secret, err := s.store.GetSercret(req.Username)
+	if err != nil {
+		return err
+	}
+	if err := utils.ValidateOTP(&models.OTP{Token: req.Token, Otp_secret: secret.Secret}); err != nil {
+		return err
+	}
+	if err := s.store.UserUpdateEnableOtp(req.Username); err != nil {
+		return err
+	}
+	return writeJSON(w, http.StatusOK, ApiSuccess{Success: "otp verified and enabled"})
+}
+
+func (s *ApiServer) handleValidateOtp(w http.ResponseWriter, r *http.Request) error {
+	if err := checkPostMethod(r); err != nil {
+		return err
+	}
+	req := new(models.Token)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil
+	}
+	secret, err := s.store.GetSercret(req.Username)
+	if err != nil {
+		return err
+	}
+	if err := utils.ValidateOTP(&models.OTP{Token: req.Token, Otp_secret: secret.Secret}); err != nil {
+		return err
+	}
+	return writeJSON(w, http.StatusOK, ApiSuccess{Success: "otp is valid"})
+}

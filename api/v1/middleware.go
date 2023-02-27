@@ -62,3 +62,9 @@ func scanUserProfile(rows *sql.Rows) (*models.UserProfile, error) {
 	)
 	return user, err
 }
+
+func scanSecret(rows *sql.Rows) (*models.ScanSecret, error) {
+	secret := new(models.ScanSecret)
+	err := rows.Scan(&secret.Secret)
+	return secret, err
+}
